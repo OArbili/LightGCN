@@ -66,7 +66,8 @@ TRAIN_epochs = args.epochs
 LOAD = args.load
 PATH = args.path
 topks = eval(args.topks)
-tensorboard = args.tensorboard
+#tensorboard = args.tensorboard
+tensorboard = True
 comment = args.comment
 # let pandas shut up
 from warnings import simplefilter
