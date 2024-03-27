@@ -88,12 +88,6 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from torch_geometric.utils import to_networkx, from_networkx
 
-
-import torch
-import networkx as nx
-import matplotlib.pyplot as plt
-from torch_geometric.utils import to_networkx, from_networkx
-
 class bridge_remove():
     
     def __init__(self):
@@ -193,7 +187,8 @@ class LightGCN(BasicModel):
         self.Graph = self.dataset.getSparseGraph()
         data = self.Graph
         from torch_sparse import SparseTensor
-        from torch_geometric import data as Data
+        from torch_geometric.data import Data
+
         adj_matrix = SparseTensor.from_torch_sparse_coo_tensor(data)
 
         edge_index = adj_matrix.storage.row(), adj_matrix.storage.col()
@@ -223,7 +218,7 @@ class LightGCN(BasicModel):
         
         data = cur_bridge_remove.get_no_bridge_adj_matrix()
 
-        self.Graph = data
+        self.Graph = torch.tensor(data.edge_index)
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
         # print("save_txt")
