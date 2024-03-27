@@ -88,6 +88,12 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from torch_geometric.utils import to_networkx, from_networkx
 
+
+import torch
+import networkx as nx
+import matplotlib.pyplot as plt
+from torch_geometric.utils import to_networkx, from_networkx
+
 class bridge_remove():
     
     def __init__(self):
@@ -111,6 +117,9 @@ class bridge_remove():
         # Add the bridge edge
         self.G.add_edge(7, 8)
     
+    def load_networkx_g(self,G):
+        self.G = G
+
     def load_adj_matrix(self,adj_matrix):
         self.G = to_networkx(adj_matrix)
         
@@ -122,7 +131,7 @@ class bridge_remove():
         self.G_no_bridges.remove_edges_from(self.bridge_edges)
     
     def get_no_bridge_adj_matrix(self):
-        return from_networkx(self.G_no_bridgesaph)
+        return from_networkx(self.G_no_bridges)
     
     def get_adj_matrix(self):
         data = from_networkx(self.G)
@@ -146,7 +155,6 @@ class bridge_remove():
             plt.title(title)
             plt.axis('off')
             plt.show()
-
 
 
 class LightGCN(BasicModel):
@@ -183,13 +191,39 @@ class LightGCN(BasicModel):
             print('use pretarined data')
         self.f = nn.Sigmoid()
         self.Graph = self.dataset.getSparseGraph()
-        print(type(self.Graph))
+        data = self.Graph
+        from torch_sparse import SparseTensor
+        from torch_geometric import data as Data
+        adj_matrix = SparseTensor.from_torch_sparse_coo_tensor(data)
+
+        edge_index = adj_matrix.storage.row(), adj_matrix.storage.col()
+        edge_weight = adj_matrix.storage.value()
+
+        # Get the number of nodes in the graph
+        num_nodes = adj_matrix.size(0)
+
+        # Create a dummy node feature matrix with a single feature of value 1 for each node
+        x = torch.ones(num_nodes, 1)
+
+        # Create a PyG data object
+        data = Data(x=x, edge_index=edge_index, edge_weight=edge_weight)
+
+        import networkx as nx
+
+        # Assuming 'data' is your PyG Data object
+        edge_list = [(u.item(), v.item()) for u, v in zip(data.edge_index[0], data.edge_index[1])]
+
+        # Create a directed graph from the edge list
+        G = nx.from_edgelist(edge_list, create_using=nx.DiGraph())
+
         cur_bridge_remove = bridge_remove()
-        cur_bridge_remove.load_adj_matrix(self.Graph)
+        cur_bridge_remove.load_networkx_g(G.to_undirected())
         cur_bridge_remove.find_bridge_edges()
         cur_bridge_remove.remove_bridge_edges()
-        self.Graph = cur_bridge_remove.get_adj_matrix()
-        print(type(self.Graph))
+        
+        data = cur_bridge_remove.get_no_bridge_adj_matrix()
+
+        self.Graph = data
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
         # print("save_txt")
