@@ -114,6 +114,7 @@ class LightGCN(BasicModel):
             print('use pretarined data')
         self.f = nn.Sigmoid()
         self.Graph = self.dataset.getSparseGraph()
+        print(type(self.Graph))
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
         # print("save_txt")
