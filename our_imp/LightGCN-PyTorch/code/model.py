@@ -12,6 +12,9 @@ import torch
 from dataloader import BasicDataset
 from torch import nn
 import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+from torch_geometric.utils import to_networkx, from_networkx
 
 
 class BasicModel(nn.Module):    
@@ -80,6 +83,72 @@ class PureMF(BasicModel):
         scores = torch.sum(users_emb*items_emb, dim=1)
         return self.f(scores)
 
+import torch
+import networkx as nx
+import matplotlib.pyplot as plt
+from torch_geometric.utils import to_networkx, from_networkx
+
+class bridge_remove():
+    
+    def __init__(self):
+        self.G = None
+        self.G_no_bridges = None
+        self.adj_sparse_mtx = None
+        self.bridge_edges = None
+        
+    def create_graph(self):
+        self.G = nx.Graph()
+
+        # Add edges for nodes 1-7
+        for i in range(1, 7):
+            for j in range(i + 1, 8):
+                self.G.add_edge(i, j)
+
+        # Add edges for nodes 8-15
+        for i in range(8, 15):
+            for j in range(i + 1, 16):
+                self.G.add_edge(i, j)
+        # Add the bridge edge
+        self.G.add_edge(7, 8)
+    
+    def load_adj_matrix(self,adj_matrix):
+        self.G = to_networkx(adj_matrix)
+        
+    def find_bridge_edges(self):
+        self.bridge_edges = list(nx.bridges(self.G))
+
+    def remove_bridge_edges(self):
+        self.G_no_bridges = self.G.copy()
+        self.G_no_bridges.remove_edges_from(self.bridge_edges)
+    
+    def get_no_bridge_adj_matrix(self):
+        return from_networkx(self.G_no_bridgesaph)
+    
+    def get_adj_matrix(self):
+        data = from_networkx(self.G)
+        import torch_geometric.transforms as T
+
+        sparse_tensor = T.ToSparseTensor()(data)
+
+        # sparse_tensor = torch.sparse_coo_tensor(adj_matrix, edge_weights, (data.num_nodes, data.num_nodes))
+        return sparse_tensor
+    
+    def display_graph(self,title,which='full'):
+        if which == 'full':
+            pos = nx.spring_layout(self.G)
+            nx.draw(self.G, pos, with_labels=True, node_size=300, node_color='lightblue', font_size=12, font_weight='bold')
+            plt.title(title)
+            plt.axis('off')
+            plt.show()
+        else:
+            pos = nx.spring_layout(self.G_no_bridges)
+            nx.draw(self.G_no_bridges, pos, with_labels=True, node_size=300, node_color='lightblue', font_size=12, font_weight='bold')
+            plt.title(title)
+            plt.axis('off')
+            plt.show()
+
+
+
 class LightGCN(BasicModel):
     def __init__(self, 
                  config:dict, 
@@ -114,6 +183,12 @@ class LightGCN(BasicModel):
             print('use pretarined data')
         self.f = nn.Sigmoid()
         self.Graph = self.dataset.getSparseGraph()
+        print(type(self.Graph))
+        cur_bridge_remove = bridge_remove()
+        cur_bridge_remove.load_adj_matrix(self.Graph)
+        cur_bridge_remove.find_bridge_edges()
+        cur_bridge_remove.remove_bridge_edges()
+        self.Graph = cur_bridge_remove.get_adj_matrix()
         print(type(self.Graph))
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
