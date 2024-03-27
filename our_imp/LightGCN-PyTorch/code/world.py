@@ -14,7 +14,7 @@ from parse import parse_args
 import multiprocessing
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-args = parse_args()
+# args = parse_args()
 
 ROOT_PATH = os.path.dirname(os.path.dirname(__file__))
 CODE_PATH = join(ROOT_PATH, 'code')
@@ -33,28 +33,28 @@ config = {}
 all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book']
 all_models  = ['mf', 'lgn']
 # config['batch_size'] = 4096
-config['bpr_batch_size'] = args.bpr_batch
-config['latent_dim_rec'] = args.recdim
-config['lightGCN_n_layers']= args.layer
+config['bpr_batch_size'] = 2048
+config['latent_dim_rec'] = 64
+config['lightGCN_n_layers']= 4
 # config['dropout'] = args.dropout
 config['dropout'] = True
-config['keep_prob']  = args.keepprob
-config['A_n_fold'] = args.a_fold
-config['test_u_batch_size'] = args.testbatch
-config['multicore'] = args.multicore
-config['lr'] = args.lr
-config['decay'] = args.decay
-config['pretrain'] = args.pretrain
+config['keep_prob']  = 0.6
+config['A_n_fold'] = 100
+config['test_u_batch_size'] = 100
+config['multicore'] = 0
+config['lr'] = 0.001
+config['decay'] = 0.0001
+config['pretrain'] = 0
 config['A_split'] = False
 config['bigdata'] = False
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")
 CORES = multiprocessing.cpu_count() // 2
-seed = args.seed
+seed = 2020
 
-dataset = args.dataset
-model_name = args.model
+dataset = "gowalla"
+model_name = "lgn"
 if dataset not in all_dataset:
     raise NotImplementedError(f"Haven't supported {dataset} yet!, try {all_dataset}")
 if model_name not in all_models:
@@ -63,13 +63,13 @@ if model_name not in all_models:
 
 
 
-TRAIN_epochs = args.epochs
-LOAD = args.load
-PATH = args.path
-topks = eval(args.topks)
+TRAIN_epochs = 1000
+LOAD = 0
+PATH = "./checkpoints"
+topks = eval("[20]")
 #tensorboard = args.tensorboard
 tensorboard = True
-comment = args.comment
+comment = "lgn"
 # let pandas shut up
 from warnings import simplefilter
 simplefilter(action="ignore", category=FutureWarning)
